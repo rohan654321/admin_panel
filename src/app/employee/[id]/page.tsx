@@ -35,36 +35,42 @@ export default function EmployeeDetails() {
   useEffect(() => {
     const storedEmployees = localStorage.getItem("employees");
     const storedLeads = localStorage.getItem("leads");
-
+  
     if (!storedEmployees) {
       router.replace("/employee-login");
       return;
     }
-
+  
     try {
       const employees = JSON.parse(storedEmployees);
       const emp = employees.find((e: any) => e.id.toString() === params.id);
-
+  
       if (!emp) {
         router.replace("/employee-login");
         return;
       }
-
+  
       setEmployee(emp);
-
+  
+      // Ensure parsed leads are an object
       const allLeads = storedLeads ? JSON.parse(storedLeads) : {};
-      const empLeads = allLeads[emp.id] || [];
+      
+      // Ensure empLeads is always an array
+      const empLeads = Array.isArray(allLeads[emp.id]) ? allLeads[emp.id] : [];
+      
       setLeads(empLeads);
-
+  
       // Count leads for the selected date
       const selectedDateStr = selectedDate.toISOString().split("T")[0];
       const leadsCount = empLeads.filter((lead: any) => lead.date === selectedDateStr).length;
       setLeadsToday(leadsCount);
+      
     } catch (error) {
       console.error("Error parsing data:", error);
       router.replace("/employee-login");
     }
   }, [params.id, router, selectedDate]);
+  
 
   const handleLeadInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setNewLead({ ...newLead, [e.target.name]: e.target.value });
