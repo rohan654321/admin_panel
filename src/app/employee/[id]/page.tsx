@@ -12,6 +12,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CircularProgressbar } from "react-circular-progressbar"; 
+import "react-circular-progressbar/dist/styles.css";
 
 export default function EmployeeDetails() {
   const params = useParams();
@@ -31,6 +33,8 @@ export default function EmployeeDetails() {
     city: "",
     message: "",
   });
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [animatedLeadCount, setAnimatedLeadCount] = useState(0);
 
   useEffect(() => {
     const storedEmployees = localStorage.getItem("employees");
@@ -56,17 +60,35 @@ export default function EmployeeDetails() {
       const empLeads = Array.isArray(allLeads[emp.id]) ? allLeads[emp.id] : [];
 
       setLeads(empLeads);
+      setTotalLeads(empLeads.length);
 
-      const selectedDateStr = selectedDate.toISOString().split("T")[0];
-      const leadsCount = empLeads.filter(
-        (lead: any) => lead.date === selectedDateStr
-      ).length;
-      setLeadsToday(leadsCount);
+      // Animation logic for animated progress
+      const interval = setInterval(() => {
+        if (animatedLeadCount < empLeads.length) {
+          setAnimatedLeadCount((prev) => prev + 1);
+        }
+      }, 50); // Animate by 1 count every 50ms
+
+      // Clear interval when count reaches the total leads
+      if (animatedLeadCount >= empLeads.length) {
+        clearInterval(interval);
+      }
+
+      return () => clearInterval(interval); // Clean up the interval on component unmount
     } catch (error) {
       console.error("Error parsing data:", error);
       router.replace("/employee-login");
     }
-  }, [params.id, router, selectedDate]);
+  }, [params.id, router, animatedLeadCount]);
+
+  useEffect(() => {
+    // Calculate today's date in the format yyyy-mm-dd
+    const today = new Date().toISOString().split("T")[0];
+
+    // Filter leads for today
+    const leadsTodayCount = leads.filter((lead: any) => lead.date === today).length;
+    setLeadsToday(leadsTodayCount);
+  }, [leads]);
 
   const handleLeadInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -89,22 +111,22 @@ export default function EmployeeDetails() {
       alert("All fields are required!");
       return;
     }
-  
+
     const now = new Date();
     const newLeadEntry = {
       ...newLead,
-      date: now.toISOString().split("T")[0],
-      time: now.toISOString().split("T")[1].split(".")[0],
+      date: now.toISOString().split("T")[0], // Store date as yyyy-mm-dd
+      time: now.toISOString().split("T")[1].split(".")[0], // Store time as hh:mm:ss
       hour: now.getHours(),
     };
-  
+
     const updatedLeads = [...leads, newLeadEntry];
     setLeads(updatedLeads);
-  
+
     const storedLeads = JSON.parse(localStorage.getItem("leads") || "{}");
     storedLeads[employee.id] = updatedLeads;
     localStorage.setItem("leads", JSON.stringify(storedLeads));
-  
+
     setIsLeadFormOpen(false);
     setNewLead({
       name: "",
@@ -116,12 +138,6 @@ export default function EmployeeDetails() {
       city: "",
       message: "",
     });
-  
-    const today = new Date().toISOString().split("T")[0];
-    const leadsTodayCount = updatedLeads.filter(
-      (lead: any) => lead.date === today
-    ).length;
-    setLeadsToday(leadsTodayCount);
   };
 
   const handleLogout = () => {
@@ -161,8 +177,27 @@ export default function EmployeeDetails() {
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">Employee Details</h2>
+          <div className="flex items-center">
+            <img
+              src={employee?.avatar || "/default-avatar.png"}
+              alt="Employee Avatar"
+              className="w-12 h-12 rounded-full object-cover mr-4"
+            />
+            <h2 className="text-2xl font-bold text-gray-800">{employee?.firstName} {employee?.lastName}</h2>
+          </div>
           <p className="text-lg font-bold text-gray-600">Leads Today: {leadsToday}</p>
+          <div className="w-24 h-24">
+            <CircularProgressbar
+              value={(animatedLeadCount / totalLeads) * 100}
+              text={`${animatedLeadCount}`}
+              strokeWidth={10}
+              styles={{
+                path: { stroke: "#4A90E2" },
+                text: { fill: "#4A90E2", fontSize: "24px" },
+                trail: { stroke: "#e5e5e5" },
+              }}
+            />
+          </div>
         </div>
         <p className="text-gray-800">
           <strong>Name:</strong> {employee?.firstName} {employee?.lastName}
@@ -199,6 +234,7 @@ export default function EmployeeDetails() {
                   <p className="text-gray-600">{lead.email}</p>
                   <p className="text-gray-600">{lead.phone}</p>
                   <p className="text-gray-600">{lead.jobTitle}</p>
+                  <p className="text-gray-600">{lead.status}</p>
                   <p className="text-gray-600">{lead.company}</p>
                   <p className="text-gray-600">{lead.city}</p>
                   <p className="text-gray-600">{lead.message}</p>
@@ -213,82 +249,85 @@ export default function EmployeeDetails() {
       {/* Add Lead Form Modal */}
       {isLeadFormOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h3 className="text-2xl font-bold mb-4">Add Lead</h3>
+            <form>
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="Name"
+                name="name"
+                value={newLead.name}
+                onChange={handleLeadInputChange}
+              />
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="email"
+                placeholder="Email"
+                name="email"
+                value={newLead.email}
+                onChange={handleLeadInputChange}
+              />
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="Phone"
+                name="phone"
+                value={newLead.phone}
+                onChange={handleLeadInputChange}
+              />
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="Job Title"
+                name="jobTitle"
+                value={newLead.jobTitle}
+                onChange={handleLeadInputChange}
+              />
+                            <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="status"
+                name="status"
+                value={newLead.status}
+                onChange={handleLeadInputChange}
+              />
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="Company"
+                name="company"
+                value={newLead.company}
+                onChange={handleLeadInputChange}
+              />
+              <input
+                className="mb-2 p-2 w-full border rounded"
+                type="text"
+                placeholder="City"
+                name="city"
+                value={newLead.city}
+                onChange={handleLeadInputChange}
+              />
+              <textarea
+                className="mb-2 p-2 w-full border rounded"
+                placeholder="Message"
+                name="message"
+                value={newLead.message}
+                onChange={handleLeadInputChange}
+              />
+              <button
+                type="button"
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={submitLead}
+              >
+                Submit Lead
+              </button>
+            </form>
             <button
+              className="w-full mt-4 bg-gray-400 text-white px-4 py-2 rounded"
               onClick={() => setIsLeadFormOpen(false)}
-              className="text-blue-500 mb-4"
             >
-              &larr; Back
-            </button>
-            <h2 className="text-lg font-bold mb-4">Add New Lead</h2>
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.name}
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.email}
-            />
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Phone"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.phone}
-            />
-            <input
-              type="text"
-              name="status"
-              placeholder="Status"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.status}
-            />
-            <input
-              type="text"
-              name="jobTitle"
-              placeholder="Job Title"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.jobTitle}
-            />
-            <input
-              type="text"
-              name="company"
-              placeholder="Company"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.company}
-            />
-            <input
-              type="text"
-              name="city"
-              placeholder="City"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.city}
-            />
-            <textarea
-              name="message"
-              placeholder="Message"
-              className="w-full border p-2 mb-2"
-              onChange={handleLeadInputChange}
-              value={newLead.message}
-            />
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded w-full"
-              onClick={submitLead}
-            >
-              Submit
+              Close
             </button>
           </div>
         </div>

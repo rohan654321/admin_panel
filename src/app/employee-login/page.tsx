@@ -34,12 +34,10 @@ export default function EmployeeLogin() {
       return alert("Employee not found! Please check your email.");
     }
 
-    // Check default password
     if (password !== "123456") {
       return alert("Incorrect password! Default password is 123456.");
     }
 
-    // Store logged-in employee data in localStorage
     localStorage.setItem("currentEmployee", JSON.stringify(employee));
     router.push(`/employee/${employee.id}`);
   };

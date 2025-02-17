@@ -10,6 +10,7 @@ interface Employee {
   lastName: string;
   phone: string;
   department: string;
+  avatar: string; // Added avatar field
 }
 
 interface Lead {
@@ -34,7 +35,6 @@ export default function AdminPanel() {
     phone: "",
     department: "",
   });
-  
 
   useEffect(() => {
     setIsClient(true);
@@ -43,20 +43,15 @@ export default function AdminPanel() {
       if (!isAuthenticated) {
         router.push("/admin-login");
       }
-  
+
       // Fetch employees from localStorage
       const storedEmployees = JSON.parse(localStorage.getItem("employees") || "[]");
       setEmployees(storedEmployees);
-  
-      // Fetch leads from localStorage
+
       let storedLeads = JSON.parse(localStorage.getItem("leads") || "[]");
-  
-      // Ensure storedLeads is an array
       if (!Array.isArray(storedLeads)) {
         storedLeads = [];
       }
-  
-      // Generate leads from employees if not available
       if (storedLeads.length === 0 && Array.isArray(storedEmployees)) {
         storedLeads = storedEmployees.map((emp) => ({
           id: emp.id,
@@ -67,13 +62,10 @@ export default function AdminPanel() {
         }));
         localStorage.setItem("leads", JSON.stringify(storedLeads));
       }
-  
+
       setLeads(storedLeads);
     }
   }, [router]);
-  
-  
-  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -90,6 +82,7 @@ export default function AdminPanel() {
       phone: form.phone,
       email: form.email,
       department: form.department,
+      avatar: "https://www.w3schools.com/howto/img_avatar.png", // Default avatar image URL
     };
     const updatedEmployees = [...employees, newEmployee];
     setEmployees(updatedEmployees);
@@ -116,8 +109,10 @@ export default function AdminPanel() {
       <aside className="w-64 bg-blue-900 text-white p-6 flex flex-col">
         <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
         <button className={`py-2 px-4 mb-2 rounded ${activeTab === "dashboard" ? "underline" : ""}`} onClick={() => setActiveTab("dashboard")}>Dashboard</button>
-        <button className={`py-2 px-4 mb-2 rounded ${activeTab === "leads" ? "underline" : ""}`} onClick={() => setActiveTab("leads")}>Leads</button>
-        <button className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded" onClick={() => { localStorage.removeItem("isAuthenticated"); router.push("/admin-login"); }}>Logout</button>
+        {/* <button className={`py-2 px-4 mb-2 rounded ${activeTab === "leads" ? "underline" : ""}`} onClick={() => setActiveTab("leads")}>Leads</button> */}
+        <div className="flex-glow"/>
+
+        <button className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded mt-auto" onClick={() => { localStorage.removeItem("isAuthenticated"); router.push("/admin-login"); }}>Logout</button>
       </aside>
 
       <div className="flex-1 p-8">
@@ -143,6 +138,7 @@ export default function AdminPanel() {
                   <thead className="bg-blue-600 text-white">
                    <tr>
                      <th className="border px-4 py-2">ID</th>
+                     <th className="border px-4 py-2">Avatar</th> {/* Added Avatar column */}
                      <th className="border px-4 py-2">Full Name</th>
                      <th className="border px-4 py-2">Phone</th>
                      <th className="border px-4 py-2">Email</th>
@@ -154,6 +150,9 @@ export default function AdminPanel() {
                    {employees.map((emp) => (
                     <tr key={emp.id} className="text-center bg-gray-50 hover:bg-gray-100">
                       <td className="border px-4 py-2 text-black">{emp.id}</td>
+                      <td className="border px-4 py-2 text-black">
+                        <img src={emp.avatar} alt="Avatar" className="w-12 h-12 rounded-full" /> {/* Display Avatar */}
+                      </td>
                       <td className="border px-4 py-2 text-black">{emp.firstName} {emp.lastName}</td>
                       <td className="border px-4 py-2 text-black">{emp.phone}</td>
                       <td className="border px-4 py-2 text-black">{emp.email}</td>
@@ -203,4 +202,3 @@ export default function AdminPanel() {
     </div>
   );
 }
-

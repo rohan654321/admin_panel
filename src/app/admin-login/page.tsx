@@ -9,8 +9,6 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
-  // Dummy credentials for authentication
   const VALID_CREDENTIALS = {
     email: "admin@example.com",
     password: "admin123",
@@ -23,13 +21,13 @@ export default function LoginPage() {
 
     setTimeout(() => {
       if (email === VALID_CREDENTIALS.email && password === VALID_CREDENTIALS.password) {
-        localStorage.setItem("isAuthenticated", "true") // Store auth state
-        router.push("/admin") // Redirect to admin page
+        localStorage.setItem("isAuthenticated", "true") 
+        router.push("/admin") 
       } else {
         setError("Invalid email or password")
       }
       setIsLoading(false)
-    }, 1000) // Simulate loading delay
+    }, 1000)
   }
 
   return (
