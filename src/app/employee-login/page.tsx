@@ -39,7 +39,8 @@ export default function EmployeeLogin() {
       return alert("Incorrect password! Default password is 123456.");
     }
 
-    localStorage.setItem("loggedInEmployee", JSON.stringify(employee));
+    // Store logged-in employee data in localStorage
+    localStorage.setItem("currentEmployee", JSON.stringify(employee));
     router.push(`/employee/${employee.id}`);
   };
 
